@@ -9,10 +9,11 @@
   },
   "license": "UNLICENSED",
   "scripts": {
-    "build": "nest build",
+    "build": "prisma generate && nest build",
     "db:import:meals": "node scripts/import-meals.mjs",
     "data:enrich:meals": "node scripts/enrich-meals.mjs",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+    "postinstall": "prisma generate",
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
