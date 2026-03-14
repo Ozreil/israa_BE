@@ -1,0 +1,133 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  PATIENT
+}
+
+enum AppointmentStatus {
+  AVAILABLE
+  BOOKED
+  COMPLETED
+  CANCELLED
+}
+
+enum MealType {
+  BREAKFAST
+  SNACK
+  LUNCH
+  DINNER
+  SUHUR
+}
+
+model User {
+  id           String   @id @default(uuid()) @db.Uuid
+  fullName     String
+  email        String   @unique
+  passwordHash String
+  role         UserRole
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  patientAppointments Appointment[] @relation("PatientAppointments")
+  adminAppointments   Appointment[] @relation("AdminAppointments")
+  patientReports      HealthReport[] @relation("PatientReports")
+  adminReports        HealthReport[] @relation("AdminReports")
+}
+
+model Appointment {
+  id              String            @id @default(uuid()) @db.Uuid
+  patientId       String            @db.Uuid
+  adminId         String            @db.Uuid
+  appointmentDate DateTime
+  status          AppointmentStatus @default(AVAILABLE)
+  notes           String?
+  createdAt       DateTime          @default(now())
+
+  patient User @relation("PatientAppointments", fields: [patientId], references: [id])
+  admin   User @relation("AdminAppointments", fields: [adminId], references: [id])
+
+  reports HealthReport[]
+
+  @@index([patientId])
+  @@index([adminId])
+  @@index([appointmentDate])
+}
+
+model HealthReport {
+  id                 String   @id @default(uuid()) @db.Uuid
+  patientId          String   @db.Uuid
+  adminId            String   @db.Uuid
+  appointmentId      String   @db.Uuid
+  weight             Float
+  height             Float
+  bmi                Float
+  bodyFatPercentage  Float?
+  medicalConditions  String
+  allergies          String
+  lifestyleNotes     String
+  createdAt          DateTime @default(now())
+
+  patient     User        @relation("PatientReports", fields: [patientId], references: [id])
+  admin       User        @relation("AdminReports", fields: [adminId], references: [id])
+  appointment Appointment @relation(fields: [appointmentId], references: [id])
+
+  @@index([patientId])
+  @@index([adminId])
+  @@index([appointmentId])
+}
+
+model MealPlanTemplate {
+  id              String   @id @default(uuid()) @db.Uuid
+  calories        Int?
+  tags            Json
+  sourceFile      String?
+  planTable       Json
+  notes           String?
+  isNormalized    Boolean  @default(false)
+  normalizedTable Json?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Meal {
+  id        String   @id @default(uuid()) @db.Uuid
+  meal      String   @unique
+  protein   Float?
+  carbs     Float?
+  fat       Float?
+  calories  Float?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// model Plan {
+//   id             String   @id @default(uuid()) @db.Uuid
+//   patientId      String?  @db.Uuid
+//   adminId        String?  @db.Uuid
+//   healthReportId String?  @db.Uuid
+//
+//   calories   Int?
+//   title      String?
+//   notes      String?
+//   sourceFile String?
+//
+//   createdAt DateTime @default(now())
+//
+//   patient      User?         @relation(fields: [patientId], references: [id])
+//   admin        User?         @relation(fields: [adminId], references: [id])
+//   healthReport HealthReport? @relation(fields: [healthReportId], references: [id])
+//
+//   days PlanDay[]
+//
+//   @@index([patientId])
+//   @@index([adminId])
+// }
