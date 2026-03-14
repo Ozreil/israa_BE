@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  Header,
   Param,
   ParseUUIDPipe,
   Patch,
@@ -20,26 +21,31 @@ export class MealsController {
   constructor(private readonly mealsService: MealsService) {}
 
   @Post()
+  @Header('Content-Type', 'application/json')
   create(@Body() dto: CreateMealDto) {
     return this.mealsService.create(dto);
   }
 
   @Get()
+  @Header('Content-Type', 'application/json')
   findAll(@Query() query: GetMealsDto) {
     return this.mealsService.findAll(query);
   }
 
   @Get('autocomplete')
+  @Header('Content-Type', 'application/json')
   autocomplete(@Query() query: AutocompleteMealsDto) {
     return this.mealsService.autocomplete(query);
   }
 
   @Get(':id')
+  @Header('Content-Type', 'application/json')
   findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.mealsService.findOne(id);
   }
 
   @Patch(':id')
+  @Header('Content-Type', 'application/json')
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateMealDto,
@@ -48,6 +54,7 @@ export class MealsController {
   }
 
   @Delete(':id')
+  @Header('Content-Type', 'application/json')
   remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.mealsService.remove(id);
   }
