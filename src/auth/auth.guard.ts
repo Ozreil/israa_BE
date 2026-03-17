@@ -13,15 +13,19 @@ export class AuthGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
     const request = context
       .switchToHttp()
-      .getRequest<{ headers: Record<string, string | undefined>; user?: unknown }>();
+      .getRequest<{
+        headers: Record<string, string | undefined>;
+        user?: unknown;
+      }>();
 
     const header = request.headers.authorization;
+    const cookieToken = this.extractCookieToken(request.headers.cookie);
+    const token =
+      header?.startsWith('Bearer ') ? header.slice('Bearer '.length) : cookieToken;
 
-    if (!header?.startsWith('Bearer ')) {
+    if (!token) {
       throw new UnauthorizedException('Missing bearer token');
     }
-
-    const token = header.slice('Bearer '.length);
     const payload = this.tokenService.verify(token);
 
     request.user = {
@@ -30,5 +34,20 @@ export class AuthGuard implements CanActivate {
     };
 
     return true;
+  }
+
+  private extractCookieToken(cookieHeader?: string) {
+    if (!cookieHeader) {
+      return undefined;
+    }
+
+    for (const part of cookieHeader.split(';')) {
+      const [name, ...valueParts] = part.trim().split('=');
+      if (name === 'auth_token') {
+        return decodeURIComponent(valueParts.join('='));
+      }
+    }
+
+    return undefined;
   }
 }

@@ -59,6 +59,10 @@ export class TokenService {
     return payload;
   }
 
+  getTtlSeconds() {
+    return this.ttlSeconds;
+  }
+
   private signValue(value: string) {
     return createHmac('sha256', this.secret).update(value).digest('base64url');
   }

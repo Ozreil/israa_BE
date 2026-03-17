@@ -41,7 +41,10 @@ export class AuthService {
       },
     });
 
-    const accessToken = this.tokenService.sign(user.id, user.email);
+    const accessToken = this.tokenService.sign(
+      user.id,
+      user.email ?? googleUser.email,
+    );
     return { accessToken, user };
   }
 
