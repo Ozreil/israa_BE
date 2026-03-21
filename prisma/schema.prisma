@@ -128,25 +128,12 @@ model PatientProfile {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-// model Plan {
-//   id             String   @id @default(uuid()) @db.Uuid
-//   patientId      String?  @db.Uuid
-//   adminId        String?  @db.Uuid
-//   healthReportId String?  @db.Uuid
-//
-//   calories   Int?
-//   title      String?
-//   notes      String?
-//   sourceFile String?
-//
-//   createdAt DateTime @default(now())
-//
-//   patient      User?         @relation(fields: [patientId], references: [id])
-//   admin        User?         @relation(fields: [adminId], references: [id])
-//   healthReport HealthReport? @relation(fields: [healthReportId], references: [id])
-//
-//   days PlanDay[]
-//
-//   @@index([patientId])
-//   @@index([adminId])
-// }
+model Plan {
+  id         String   @id @default(uuid()) @db.Uuid
+  calories   Int?
+  tags       Json
+  sourceFile String?
+  days       Json
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}

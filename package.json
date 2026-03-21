@@ -11,6 +11,7 @@
   "scripts": {
     "build": "prisma generate && nest build",
     "db:import:meals": "node scripts/import-meals.mjs",
+    "db:import:plans": "node scripts/import-plans-with-ids.mjs | npx prisma db execute --stdin",
     "data:enrich:meals": "node scripts/enrich-meals.mjs",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "postinstall": "prisma generate",
