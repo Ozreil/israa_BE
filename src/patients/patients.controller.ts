@@ -1,6 +1,15 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+} from '@nestjs/common';
 import { PatientsService } from './patients.service';
 import { CreatePatientDto } from './dto/create-patient.dto';
+import { UpdatePatientDto } from './dto/update-patient.dto';
 
 @Controller('patients')
 export class PatientsController {
@@ -14,5 +23,13 @@ export class PatientsController {
   @Get(':id')
   getPatientById(@Param('id', ParseUUIDPipe) id: string) {
     return this.patientsService.getPatientById(id);
+  }
+
+  @Patch(':id')
+  updatePatient(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdatePatientDto,
+  ) {
+    return this.patientsService.updatePatient(id, dto);
   }
 }
