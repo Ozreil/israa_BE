@@ -15,8 +15,10 @@ import { AutocompleteMealsDto } from './dto/autocomplete-meals.dto';
 import { CreateMealDto } from './dto/create-meal.dto';
 import { UpdateMealDto } from './dto/update-meal.dto';
 import { GetMealsDto } from './dto/get-meals.dto';
+import { Roles, STAFF_ROLES } from '../auth/roles.decorator';
 
 @Controller('meals')
+@Roles(...STAFF_ROLES)
 export class MealsController {
   constructor(private readonly mealsService: MealsService) {}
 
