@@ -4,17 +4,14 @@ import {
   Get,
   Post,
   Query,
-  UseGuards,
   ValidationPipe,
 } from '@nestjs/common';
 import { AppointmentsService } from './appointments.service';
-import { AuthGuard } from '../auth/auth.guard';
 import { CurrentUser, type AuthUser } from '../auth/current-user.decorator';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { GetAppointmentsDto } from './dto/get-appointments.dto';
 
 @Controller('appointments')
-@UseGuards(AuthGuard)
 export class AppointmentsController {
   constructor(private readonly appointmentsService: AppointmentsService) {}
 

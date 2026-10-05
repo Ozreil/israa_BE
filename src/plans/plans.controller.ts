@@ -20,8 +20,10 @@ import {
   ReplaceMealInPlanDto,
 } from './dto/modify-plan-meal.dto';
 import { UpdatePlanDto } from './dto/update-plan.dto';
+import { Roles, STAFF_ROLES } from '../auth/roles.decorator';
 
 @Controller('plans')
+@Roles(...STAFF_ROLES)
 export class PlansController {
   constructor(private readonly plansService: PlansService) {}
 

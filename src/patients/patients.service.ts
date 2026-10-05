@@ -6,6 +6,7 @@ import {
 import { Prisma, UserRole } from '@prisma/client';
 import { DatabaseService } from '../database/database.service';
 import { CreatePatientDto } from './dto/create-patient.dto';
+import { UpdatePatientDto } from './dto/update-patient.dto';
 
 @Injectable()
 export class PatientsService {
@@ -86,5 +87,65 @@ export class PatientsService {
     }
 
     return patient;
+  }
+
+  async updatePatient(userId: string, dto: UpdatePatientDto) {
+    const existing = await this.db.patientProfile.findUnique({
+      where: { userId },
+      select: { id: true },
+    });
+
+    if (!existing) {
+      throw new NotFoundException(`Patient with user id ${userId} was not found`);
+    }
+
+    try {
+      return await this.db.$transaction(async (tx) => {
+        if (dto.fullName !== undefined) {
+          await tx.user.update({
+            where: { id: userId },
+            data: {
+              fullName: dto.fullName.trim(),
+            },
+          });
+        }
+
+        return tx.patientProfile.update({
+          where: { userId },
+          data: {
+            phone: dto.phone?.trim(),
+            age: dto.age,
+            gender: dto.gender?.trim(),
+            height: dto.height,
+            currentWeight: dto.currentWeight,
+            targetWeight: dto.targetWeight,
+            activityLevel: dto.activityLevel?.trim(),
+            goal: dto.goal?.trim(),
+            notes: dto.notes === undefined ? undefined : dto.notes?.trim() || null,
+          },
+          include: {
+            user: {
+              select: {
+                id: true,
+                fullName: true,
+                email: true,
+                role: true,
+                createdAt: true,
+                updatedAt: true,
+              },
+            },
+          },
+        });
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new ConflictException('A patient with this phone already exists');
+      }
+
+      throw error;
+    }
   }
 }

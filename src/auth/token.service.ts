@@ -10,8 +10,18 @@ type TokenPayload = {
 
 @Injectable()
 export class TokenService {
-  private readonly secret = process.env.JWT_SECRET ?? 'dev-secret-change-me';
+  private readonly secret: string;
   private readonly ttlSeconds = 60 * 60 * 24 * 7;
+
+  constructor() {
+    const secret = process.env.JWT_SECRET;
+
+    if (!secret || secret.length < 32) {
+      throw new Error('JWT_SECRET must be set to at least 32 characters');
+    }
+
+    this.secret = secret;
+  }
 
   sign(userId: string, email: string) {
     const now = Math.floor(Date.now() / 1000);
@@ -38,7 +48,10 @@ export class TokenService {
     const actual = Buffer.from(signature);
     const expected = Buffer.from(expectedSignature);
 
-    if (actual.length !== expected.length || !timingSafeEqual(actual, expected)) {
+    if (
+      actual.length !== expected.length ||
+      !timingSafeEqual(actual, expected)
+    ) {
       throw new UnauthorizedException('Invalid token signature');
     }
 
