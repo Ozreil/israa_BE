@@ -4,6 +4,7 @@ import {
   IsInt,
   IsOptional,
   IsString,
+  IsUUID,
   Max,
   Min,
 } from 'class-validator';
@@ -25,6 +26,11 @@ export class GetPlansDto {
   @IsOptional()
   @IsString()
   sourceFile?: string;
+
+  /** A patient's saved plans. Without it, only templates are returned. */
+  @IsOptional()
+  @IsUUID()
+  patientId?: string;
 
   @IsOptional()
   @Type(() => Number)

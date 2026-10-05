@@ -1,10 +1,14 @@
+import { PlanStatus } from '@prisma/client';
 import { Type } from 'class-transformer';
 import {
   IsArray,
+  IsEnum,
   IsInt,
   IsOptional,
   IsString,
+  IsUUID,
   Max,
+  MaxLength,
   Min,
 } from 'class-validator';
 
@@ -26,4 +30,18 @@ export class CreatePlanDto {
 
   @IsArray()
   days: unknown[];
+
+  /** Set to save the plan for a patient; omit to create a template. */
+  @IsOptional()
+  @IsUUID()
+  patientId?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  name?: string;
+
+  @IsOptional()
+  @IsEnum(PlanStatus)
+  status?: PlanStatus;
 }
