@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { PlanStatus, Prisma, UserRole } from '@prisma/client';
 import { DatabaseService } from '../database/database.service';
 import { CreatePlanDto } from './dto/create-plan.dto';
 import { GetPlansDto } from './dto/get-plans.dto';
@@ -59,7 +59,9 @@ export class PlansService {
     const itemIndex = slot.items.indexOf(dto.oldMealId);
 
     if (itemIndex === -1) {
-      throw new BadRequestException('Old meal does not exist in this day and type');
+      throw new BadRequestException(
+        'Old meal does not exist in this day and type',
+      );
     }
 
     slot.items[itemIndex] = dto.newMealId;
@@ -74,13 +76,21 @@ export class PlansService {
     return value as Prisma.InputJsonValue;
   }
 
-  create(dto: CreatePlanDto) {
+  async create(dto: CreatePlanDto) {
+    if (dto.patientId) {
+      await this.ensurePatientExists(dto.patientId);
+    }
+
     return this.db.plan.create({
       data: {
         calories: dto.calories ?? null,
         tags: this.toJson(dto.tags ?? []),
         sourceFile: dto.sourceFile?.trim() || null,
         days: this.toJson(dto.days),
+        patientId: dto.patientId ?? null,
+        name: dto.name?.trim() || null,
+        // Templates have no status; patient plans start as drafts.
+        status: dto.patientId ? (dto.status ?? PlanStatus.DRAFT) : null,
       },
     });
   }
@@ -90,6 +100,8 @@ export class PlansService {
       query.calories !== undefined && query.closestCalories === true;
 
     const where: Prisma.PlanWhereInput = {
+      // Never mix a patient's saved plans into template searches.
+      patientId: query.patientId ?? null,
       sourceFile: query.sourceFile
         ? {
             contains: query.sourceFile,
@@ -156,9 +168,10 @@ export class PlansService {
         where,
         skip,
         take,
-        orderBy: {
-          createdAt: 'desc',
-        },
+        // A patient's most recently edited plan comes first.
+        orderBy: query.patientId
+          ? { updatedAt: 'desc' }
+          : { createdAt: 'desc' },
       }),
       this.db.plan.count({ where }),
     ]);
@@ -195,6 +208,10 @@ export class PlansService {
   async update(id: string, dto: UpdatePlanDto) {
     await this.ensureExists(id);
 
+    if (dto.patientId) {
+      await this.ensurePatientExists(dto.patientId);
+    }
+
     return this.db.plan.update({
       where: { id },
       data: {
@@ -202,6 +219,9 @@ export class PlansService {
         tags: dto.tags === undefined ? undefined : this.toJson(dto.tags),
         sourceFile: dto.sourceFile?.trim(),
         days: dto.days === undefined ? undefined : this.toJson(dto.days),
+        patientId: dto.patientId,
+        name: dto.name === undefined ? undefined : dto.name.trim() || null,
+        status: dto.status,
       },
     });
   }
@@ -224,6 +244,17 @@ export class PlansService {
 
     if (!plan) {
       throw new NotFoundException(`Plan with id ${id} was not found`);
+    }
+  }
+
+  private async ensurePatientExists(patientId: string) {
+    const patient = await this.db.user.findUnique({
+      where: { id: patientId },
+      select: { role: true },
+    });
+
+    if (!patient || patient.role !== UserRole.PATIENT) {
+      throw new NotFoundException(`Patient with id ${patientId} was not found`);
     }
   }
 
@@ -252,7 +283,9 @@ export class PlansService {
     }
 
     if (!Array.isArray(plan.days)) {
-      throw new BadRequestException('Plan days data is not in the expected format');
+      throw new BadRequestException(
+        'Plan days data is not in the expected format',
+      );
     }
 
     return {
@@ -273,7 +306,9 @@ export class PlansService {
 
     const mealSlot = dayNode.meals.find((item) => item.type === type);
     if (!mealSlot) {
-      throw new NotFoundException(`Meal type "${type}" not found in day "${day}"`);
+      throw new NotFoundException(
+        `Meal type "${type}" not found in day "${day}"`,
+      );
     }
 
     if (!Array.isArray(mealSlot.items)) {

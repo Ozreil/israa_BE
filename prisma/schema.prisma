@@ -20,6 +20,11 @@ enum AppointmentStatus {
   CANCELLED
 }
 
+enum PlanStatus {
+  DRAFT
+  SENT
+}
+
 enum MealType {
   BREAKFAST
   SNACK
@@ -42,6 +47,7 @@ model User {
   patientReports      HealthReport[] @relation("PatientReports")
   adminReports        HealthReport[] @relation("AdminReports")
   patientProfile      PatientProfile?
+  plans               Plan[]
 }
 
 model Appointment {
@@ -128,12 +134,21 @@ model PatientProfile {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
+/// A weekly meal plan. Plans without a patient are templates imported from
+/// past plans; plans with a patient are that patient's saved plans.
 model Plan {
-  id         String   @id @default(uuid()) @db.Uuid
+  id         String      @id @default(uuid()) @db.Uuid
   calories   Int?
   tags       Json
   sourceFile String?
   days       Json
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  patientId  String?     @db.Uuid
+  name       String?
+  status     PlanStatus?
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  patient User? @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@index([patientId, updatedAt])
 }
